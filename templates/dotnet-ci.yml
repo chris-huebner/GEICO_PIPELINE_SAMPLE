@@ -1,0 +1,56 @@
+#
+# YAML template that can be extended for CI builds for dotnet projects.
+# Since resources cannot be declared in templates, this template requires the top-level
+# YAML pipeline file to create the PipelineAutomation respository resource, for example:
+#
+# resources:
+#  repositories:
+#    - repository: PipelineAutomation
+#      type: git
+#      name: 'Apollo/PipelineAutomation'
+#
+
+parameters:
+  - name: projectsToBuild
+    default: '**/*.csproj'
+
+  - name: projectsToTest
+    default: '**/*.[Tt]ests.csproj'
+
+  - name: buildConfiguration
+    default: Release
+
+  - name: nugetConfigPath
+    default: NuGet.config
+
+  - name: nugetFeed
+    default: ''
+
+  - name: buildPool
+    default: GEICO Linux Pool
+
+  - name: buildPoolDemands
+    type: object
+    default: []
+
+stages:
+- stage: BuildAndTest
+  displayName: 'Build and Test'
+  pool:
+    name: ${{ parameters.buildPool }}
+    demands: ${{ parameters.buildPoolDemands }}
+  jobs:
+  - job: BuildAndTest
+    displayName: 'Build and Test'
+    workspace:
+      clean: all
+    steps:
+    - checkout: self
+      clean: true
+    - template: ./dotnet-build-steps.yml
+      parameters:
+        projectsToBuild: ${{ parameters.projectsToBuild }}
+        projectsToTest: ${{ parameters.projectsToTest }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
+        nugetConfigPath:  ${{ parameters.nugetConfigPath }}
+        nugetFeed:  ${{ parameters.nugetFeed }}

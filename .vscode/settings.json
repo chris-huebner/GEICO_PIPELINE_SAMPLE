@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "**/*.yml": "azure-pipelines",
+  },
+  "azure-pipelines.customSchemaFile": "schemas/geico-cicd-schema.json"
+}

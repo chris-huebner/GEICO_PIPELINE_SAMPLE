@@ -1,0 +1,48 @@
+#
+# YAML template for pushing a NuGet package using a deployment to an Azure DevOps environment.
+#
+# Since resources cannot be declared in templates, this template requires the top-level
+# YAML pipeline file to create the PipelineAutomation respository resource, for example:
+#
+# resources:
+#  repositories:
+#    - repository: PipelineAutomation
+#      type: git
+#      name: 'Apollo/PipelineAutomation'
+
+parameters:
+- name: environment
+  type: string
+
+- name: displayName
+  type: string
+
+- name: packagePath
+  type: string
+
+jobs:
+- deployment:
+  environment: '${{ parameters.environment }}'
+  displayName: '${{ parameters.displayName }}'
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        # The default download task downloads to a folder that is re-used, so we could end up with old artifacts.
+        - download: none
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Download Pipeline Artifacts'
+          inputs:
+            path: $(System.ArtifactsDirectory)
+
+        - checkout: PipelineAutomation
+          path: PipelineAutomation
+
+        - task: PowerShell@2
+          displayName: 'Run Preview Promotion Script'
+          env:
+            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+          inputs:
+            filePath: '$(Pipeline.Workspace)\PipelineAutomation\src\ReleasePipelines\Promote-NuGetPackages.ps1'
+            arguments: '-PackagePath "$(System.ArtifactsDirectory)/${{ parameters.packagePath }}/"'
+            workingDirectory: '$(Pipeline.Workspace)' # Workaround until agents are updated: https://github.com/microsoft/azure-pipelines-agent/issues/2799

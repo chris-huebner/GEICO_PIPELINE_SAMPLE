@@ -1,0 +1,55 @@
+#
+# Template with steps for setting up and submitting a Veracode scan
+# for the given Veracode project name.
+#
+# If the veracodeProject parameter is not set, a warning will be output but
+# the steps will not fail. This gives projects a grace period to publish
+# preview packages before going to prod.
+#
+parameters:
+- name: filesForVeracodeSourcePath
+  default: ''
+
+- name: filesForVeracode
+  type: string
+  default: |
+    **/bin/**
+    !**/*.[Tt]ests/**
+    !**/*.nupkg
+
+- name: veracodeProject
+  default: ''
+
+- name: veracodeCondition
+  default: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/master/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/Release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/main')))
+
+- name: skipVeracodeCheck
+  type: boolean
+  default: false
+
+steps:
+- ${{ if and(gt(length(parameters.veracodeProject), 0), not(parameters.skipVeracodeCheck)) }}:
+  - task: CopyFiles@2
+    displayName: 'Copy Files for Veracode to: $(Build.ArtifactStagingDirectory)/$(Build.BuildNumber)'
+    inputs:
+      SourceFolder: ${{ parameters.filesForVeracodeSourcePath }}
+      Contents: ${{ parameters.filesForVeracode }}
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/$(Build.BuildNumber)'
+    condition: ${{ parameters.veracodeCondition }}
+
+- ${{ if and(gt(length(parameters.veracodeProject), 0), not(parameters.skipVeracodeCheck)) }}:
+  - task: CICDSecurityScanVeraCode@3
+    displayName: 'Initiate Veracode Scan: ${{ parameters.veracodeProject }}'
+    inputs:
+      appName: ${{ parameters.veracodeProject }}
+      buildAliasName: $(Build.DefinitionName)
+      buildDropLocation: $(Build.ArtifactStagingDirectory)
+      policyScanCheck: true
+    condition: ${{ parameters.veracodeCondition }}
+
+- ${{ if or(eq(length(parameters.veracodeProject), 0), parameters.skipVeracodeCheck) }}:
+  - task: PowerShell@2
+    displayName: 'Warn: No Veracode'
+    inputs:
+      targetType: inline
+      script: 'Write-Host "##[warning] No Veracode Project is Set. Pass in a valid veracodeProject parameter."'

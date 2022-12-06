@@ -1,0 +1,125 @@
+parameters:
+  - name: notificationEmailAddress
+    default: ApolloDevs@geico.com
+
+  - name: dockerfileName
+    default: Dockerfile
+
+  - name: aksDeployConfigFilename
+    default: aksdeploy.config.json
+
+  - name: artifactName
+    default: drop
+
+  - name: appPublishArtifactFolder
+    default: publish
+
+  - name: dockerArtifactFolder
+    default: docker
+
+  - name: buildPool
+    default: GEICO Linux Pool
+
+  - name: buildPoolDemands
+    type: object
+    default: []
+
+  - name: uniqueNameSuffix
+    default: ''
+
+stages:
+- stage: 'ImageBuildAndPush${{ parameters.uniqueNameSuffix }}'
+  displayName: Container Image Build and Push
+  dependsOn: 'BuildAndPublishApp${{ parameters.uniqueNameSuffix }}'
+  pool:
+    name: ${{ parameters.buildPool }}
+    demands: ${{ parameters.buildPoolDemands }}
+  jobs:
+  - job: BuildAndPushImage${{ parameters.uniqueNameSuffix }}
+    displayName: 'Build and Push Image ${{ parameters.uniqueNameSuffix }}'
+    workspace:
+      clean: all
+    variables:
+      uniqueArtifactName: ${{ parameters.artifactName }}${{ parameters.uniqueNameSuffix }}
+      aksConfig: '$(System.ArtifactsDirectory)/$(uniqueArtifactName)/${{ parameters.dockerArtifactFolder }}/${{ parameters.aksDeployConfigFilename }}'
+      dockerfileDir: '$(System.ArtifactsDirectory)/$(uniqueArtifactName)/${{ parameters.dockerArtifactFolder }}'
+      dockerContext: '$(System.ArtifactsDirectory)/$(uniqueArtifactName)'
+      configPath: '$(System.ArtifactsDirectory)/$(uniqueArtifactName)/${{ parameters.appPublishArtifactFolder }}'
+    steps:
+    - checkout: none
+      # The default download task downloads to a folder that is re-used, so we could end up with old artifacts. Skip.
+    - download: none
+    - script: |
+        echo '$(Build.DefinitionName)'
+        echo 'Artifact folders'
+        echo '$(uniqueArtifactName)'
+        echo '$(aksConfig)'
+        echo '$(dockerfileDir)'
+        echo '$(dockerContext)'
+        echo '$(configPath)'
+      displayName: Show Variables
+
+    # Use our own download task to $(System.ArtifactsDirectory) to make sure we have a clean folder each time.
+    - task: DownloadPipelineArtifact@2
+      name: DownloadPipelineArtifacts
+      displayName: Download Pipeline Artifacts
+      inputs:
+        path: $(System.ArtifactsDirectory)
+
+    # Docker image build
+    - task: CICDBuildImageDocker@0
+      name: ImageBuild
+      displayName: 'Build Docker Image'
+      inputs:
+        DockerfilePath: '$(dockerfileDir)/${{ parameters.dockerfileName }}'
+        AksConfigFilePath: $(aksConfig)
+        BuildContext: '$(dockerContext)'
+
+    # Push image to ACR
+    - task: CICDPushImagePrimaryACR@1
+      name: AcrPush
+      displayName: 'Push Image to ACR'
+      inputs:
+        AksConfigFilePath: $(aksConfig)
+        Version: '$(ImageBuild.ImageVersion)'
+        Latest: true
+        BuildAlias: '$(Build.DefinitionName)'
+        Environment: NonProd
+
+      # Decrypt secrets.*.json files
+    - task: CICDDecryptSecretsAKS@0
+      name: Secrets
+      displayName: 'Process Secrets'
+      inputs:
+        ConfigFolder: $(configPath)
+        NewCertificateThumbprint: '02f68823e193d4ca30c8c94f074ecfd98672bfac'
+
+      # Stage secrets and settings files for DevOps Catalog
+    - task: CICDStageAKSConfigsBlob@1
+      name: StageConfigs
+      displayName: 'Stage App Configs'
+      inputs:
+        aksDeployFileName: $(aksConfig)
+        buildOutputPath: '$(Secrets.SecretsAndAppsettingsPath)'
+        BuildAlias: '$(Build.DefinitionName)'
+
+      # Publish image metadata for DevOps Catalog
+    - task: CICDStageImageMetadataTable@1
+      displayName: Stage Image Metadata
+      inputs:
+        AksConfigFilePath: $(aksConfig)
+        ConfigStoragePath: '$(StageConfigs.ConfigFilePath)'
+        ConfigContainerName: '$(StageConfigs.ContainerName)'
+        EncryptedConfigKey: '$(StageConfigs.EncryptedConfigKey)'
+        EncryptedConfigIV: '$(StageConfigs.EncryptedConfigIV)'
+        BuildAlias: '$(Build.DefinitionName)'
+
+      # Initiate image scan
+    - task: CICDInvokeImageScanACR@0
+      displayName: 'Scan Image'
+      inputs:
+        AksConfigFilePath: '$(aksConfig)'
+        ImageVersion: '$(ImageBuild.ImageVersion)'
+        AcrPath: '$(AcrPush.ACRPath)'
+        BuildAlias: '$(Build.DefinitionName)'
+        EmailAddress: ${{ parameters.notificationEmailAddress }}

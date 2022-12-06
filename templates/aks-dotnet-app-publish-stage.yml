@@ -1,0 +1,164 @@
+#
+# Template for a .NET application build, test and artifact publish stage for AKS container image builds.
+#
+parameters:
+  - name: projectSourceFolder
+    default: ''
+
+  - name: projectFileName
+    default: ''
+
+  - name: projectsToTest
+    default: '**/*.[Tt]ests.csproj'
+
+  - name: dockerfileName
+    default: Dockerfile
+
+  - name: aksDeployConfigFilename
+    default: aksdeploy.config.json
+
+  - name: dockerfilePath
+    default: ''
+
+  - name: aksDeployConfigFilePath
+    default: ''
+
+  - name: veracodeProject
+    default: ''
+
+  - name: skipVeracodeCheck
+    default: false
+
+  - name: additionalPublishFilesToCopy
+    default: ''
+
+  - name: additionalPublishFilesDestinationFolder
+    default: ''
+
+  - name: buildConfiguration
+    default: Release
+
+  - name: nugetConfigPath
+    default: NuGet.config
+
+  - name: nugetFeed
+    default: ''
+
+  - name: artifactName
+    default: 'drop'
+
+  - name: appPublishArtifactFolder
+    default: publish
+
+  - name: dockerArtifactFolder
+    default: docker
+
+  - name: buildPool
+    default: GEICO Linux Pool
+
+  - name: buildPoolDemands
+    type: object
+    default: []
+
+  - name: uniqueNameSuffix
+    default: ''
+
+stages:
+- stage: 'BuildAndPublishApp${{ parameters.uniqueNameSuffix }}'
+  displayName: Build and Publish Application
+  pool:
+    name: ${{ parameters.buildPool }}
+    demands: ${{ parameters.buildPoolDemands }}
+  jobs:
+  - job: 'BuildAndPublishApp${{ parameters.uniqueNameSuffix }}'
+    displayName: Build and Publish Application Job
+
+    variables:
+      ${{ if gt(length(parameters.projectFileName), 0) }}:
+        projectToBuild: '${{ parameters.projectSourceFolder }}/${{ parameters.projectFileName }}'
+      ${{ if lt(length(parameters.projectFileName), 1) }}:
+        projectToBuild: '${{ parameters.projectSourceFolder }}/*.csproj'
+
+      appPublishArtifactPath: $(Build.ArtifactStagingDirectory)/${{ parameters.appPublishArtifactFolder }}
+
+      ${{ if gt(length(parameters.dockerfilePath), 0) }}:
+        dockerFile: ${{ parameters.dockerfilePath }}/${{ parameters.dockerfileName }}
+      ${{ if lt(length(parameters.dockerfilePath), 1) }}:
+        dockerFile: ${{ parameters.projectSourceFolder }}/${{ parameters.dockerfileName }}
+
+      ${{ if gt(length(parameters.aksDeployConfigFilePath), 0) }}:
+        aksDeployConfigFile: ${{ parameters.aksDeployConfigFilePath }}/${{ parameters.aksDeployConfigFilename }}
+      ${{ if lt(length(parameters.aksDeployConfigFilePath), 1) }}:
+        aksDeployConfigFile: ${{ parameters.projectSourceFolder }}/${{ parameters.aksDeployConfigFilename }}
+
+    workspace:
+      clean: all
+
+    steps:
+    - script: |
+        echo '$(projectToBuild)'
+        echo '$(appPublishArtifactPath)'
+        echo '$(dockerFile)'
+        echo '$(aksDeployConfigFile)'
+        echo '${{ parameters.projectSourceFolder }}'
+      displayName: Log Variables
+
+      # build and test the app
+    - template: ./dotnet-build-steps.yml
+      parameters:
+        projectsToBuild: $(projectToBuild)
+        buildConfiguration: ${{ parameters.buildConfiguration }}
+        nugetConfigPath: ${{ parameters.nugetConfigPath }}
+        nugetFeed: ${{ parameters.nugetFeed }}
+
+      # add build manifest
+    - task: CICDBuildManifestFile@1
+      displayName: CICD Build Manifest File
+      inputs:
+        ProjectFileName: $(projectToBuild)
+
+      # dotnet publish to the "publish" subfolder in the artifact
+    - task: DotNetCoreCLI@2
+      displayName: Publish App to ${{ parameters.appPublishArtifactFolder }}
+      inputs:
+        command: publish
+        publishWebProjects: false
+        projects: $(projectToBuild)
+        arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(appPublishArtifactPath) --no-build'
+        zipAfterPublish: false
+        modifyOutputPath: false
+
+      # Copy additional files to the publish artifacts if specified
+    - ${{ if gt(length(parameters.additionalPublishFilesToCopy), 0) }}:
+      - task: CopyFiles@2
+        condition: and(succeeded(), gt(length(${{ parameters.additionalPublishFilesToCopy }})))
+        displayName: Copy Additional Files to ${{ parameters.appPublishArtifactFolder }}/${{ parameters.additionalPublishFilesDestinationFolder }}
+        inputs:
+          Contents: parameters.additionalPublishFilesToCopy
+          TargetFolder: '$(appPublishArtifactPath)/${{ parameters.additionalPublishFilesDestinationFolder }}'
+          OverWrite: true
+
+      # Copy the Dockerfile and aksdeploy.config.json to the "docker" subfolder in the artifact
+    - task: CopyFiles@2
+      displayName: Copy Files to ${{ parameters.dockerArtifactFolder }}
+      inputs:
+        Contents: |
+          $(dockerFile)
+          $(aksDeployConfigFile)
+        TargetFolder: $(Build.ArtifactStagingDirectory)/${{ parameters.dockerArtifactFolder }}
+        OverWrite: true
+        flattenFolders: true
+
+      # Publish the Pipeline Artifact
+    - task: PublishPipelineArtifact@1
+      displayName: Publish Pipeline Artifact
+      inputs:
+        targetPath: $(Build.ArtifactStagingDirectory)
+        artifact: ${{ parameters.artifactName }}${{ parameters.uniqueNameSuffix }}
+
+    - template: ./veracode-scan-steps.yml
+      parameters:
+        veracodeProject: ${{ parameters.veracodeProject }}
+        filesForVeracodeSourcePath: $(appPublishArtifactPath)
+        filesForVeracode: '**'
+        skipVeracodeCheck: ${{ parameters.skipVeracodeCheck }}

@@ -1,0 +1,37 @@
+#
+# YAML template for pushing a NuGet package using a deployment to an Azure DevOps environment.
+#
+parameters:
+- name: environment
+  type: string
+
+- name: displayName
+  type: string
+
+- name: packagePath
+  type: string
+
+- name: nugetFeed
+  default: ''
+
+jobs:
+- deployment:
+  environment: '${{ parameters.environment }}'
+  displayName: '${{ parameters.displayName }}'
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        # The default download task downloads to a folder that is re-used, so we could end up with old artifacts.
+        - download: none
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Download Pipeline Artifacts'
+          inputs:
+            path: $(System.ArtifactsDirectory)
+        - task: NuGetCommand@2
+          displayName: 'NuGet Push ${{ parameters.packagePath }}'
+          inputs:
+            command: 'push'
+            packagesToPush: '$(System.ArtifactsDirectory)/${{ parameters.packagePath }}/*.nupkg'
+            nuGetFeedType: 'internal'
+            publishVstsFeed: ${{ parameters.nugetFeed }}

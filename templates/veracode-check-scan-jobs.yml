@@ -1,0 +1,36 @@
+#
+# Template with jobs for setting up and checking a Veracode scan status.
+#
+# If the veracodeProject parameter is not set the scan check job will
+# fail, because it is presumed that if this template is used the project
+# must have a positive Veracode result to proceed.
+#
+parameters:
+- name: veracodeProject
+  default: ''
+
+- name: scanDelayMinutes
+  default: 15
+
+jobs:
+- job: DelayBeforeScan
+  displayName: Delay
+  pool: Server
+  steps:
+  - task: Delay@1
+    displayName: 'Wait for ${{ parameters.scanDelayMinutes }} minutes'
+    inputs:
+      delayForMinutes: ${{ parameters.scanDelayMinutes }}
+
+- job: CheckVeracodeScan
+  dependsOn: DelayBeforeScan
+  displayName: 'Check Veracode Scan'
+  steps:
+  - task: CICDSecurityScanStatusVeraCode@3
+    displayName: 'Check Veracode Results: ${{ parameters.veracodeProject }}'
+    inputs:
+      appName: ${{ parameters.veracodeProject }}
+      buildAliasName: '$(Build.DefinitionName)'
+      emailNotification: '$(Build.RequestedForEmail)'
+      summaryReportCheck: true
+      InitialDelay: 0

@@ -1,0 +1,58 @@
+#
+# YAML template with steps for dotnet restore, build and test.
+#
+
+parameters:
+- name: projectsToBuild
+  default: '**/*.csproj'
+
+- name: projectsToTest
+  default: '**/*.[Tt]ests.csproj'
+
+- name: buildConfiguration
+  default: Release
+
+- name: nugetConfigPath
+  default: NuGet.config
+
+- name: nugetFeed
+  default: ''
+
+steps:
+
+- script: |
+    echo 'dotnet --list-sdks'
+    dotnet --list-sdks
+  displayName: List dotnet versions
+
+- task: DotNetCoreCLI@2
+  displayName: Restore
+  inputs:
+    command: restore
+    nugetConfigPath: ${{ parameters.nugetConfigPath }}
+    vstsFeed: ${{ parameters.nugetFeed }}
+    ${{ if gt(length(parameters.nugetFeed), 0) }}:
+      feedsToUse: select
+    ${{ if lt(length(parameters.nugetFeed), 1 ) }}:
+      feedsToUse: config
+    ${{ if gt(length(parameters.projectsToTest), 0) }}:
+      projects: |
+        ${{ parameters.projectsToBuild }}
+        ${{ parameters.projectsToTest }}
+    ${{ if lt(length(parameters.projectsToTest), 1) }}:
+      projects: ${{ parameters.projectsToBuild }}
+
+- task: DotNetCoreCLI@2
+  displayName: Build
+  inputs:
+    projects: ${{ parameters.projectsToBuild }}
+    arguments: '--configuration ${{ parameters.buildConfiguration }} --no-restore'
+
+- ${{ if gt(length(parameters.projectsToTest), 0) }}:
+  - task: DotNetCoreCLI@2
+    displayName: Test
+    inputs:
+      command: test
+      projects: ${{ parameters.projectsToTest }}
+      arguments: '--configuration ${{ parameters.buildConfiguration }} --no-restore'
+      publishTestResults: true

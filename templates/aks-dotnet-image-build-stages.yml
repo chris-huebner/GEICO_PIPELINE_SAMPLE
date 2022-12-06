@@ -1,0 +1,81 @@
+parameters:
+  - name: projectSourceFolder
+    default: ''
+
+  - name: projectFileName
+    default: ''
+
+  - name: projectsToTest
+    default: '**/*.[Tt]ests.csproj'
+
+  - name: veracodeProject
+    default: ''
+
+  - name: skipVeracodeCheck
+    default: false
+
+  - name: notificationEmailAddress
+    default: ApolloDevs@geico.com
+
+  - name: additionalPublishFilesToCopy
+    default: ''
+
+  - name: additionalPublishFilesDestinationFolder
+    default: ''
+
+  - name: dockerfilePath
+    default: ''
+
+  - name: aksDeployConfigFilePath
+    default: ''
+
+  - name: dockerfileName
+    default: Dockerfile
+
+  - name: aksDeployConfigFilename
+    default: aksdeploy.config.json
+
+  - name: buildConfiguration
+    default: Release
+
+  - name: nugetConfigPath
+    default: NuGet.config
+
+  - name: nugetFeed
+    default: ''
+
+  - name: buildPool
+    default: GEICO Linux Pool
+
+  - name: buildPoolDemands
+    type: object
+    default: []
+
+  - name: uniqueNameSuffix
+    default: ''
+
+stages:
+  - template: ./aks-dotnet-app-publish-stage.yml
+    parameters:
+      projectSourceFolder: ${{ parameters.projectSourceFolder }}
+      projectFileName: ${{ parameters.projectFileName }}
+      projectsToTest: ${{ parameters.projectsToTest }}
+      dockerfileName: ${{ parameters.dockerfileName }}
+      aksDeployConfigFilename: ${{ parameters.aksDeployConfigFilename }}
+      dockerfilePath: ${{ parameters.dockerfilePath }}
+      aksDeployConfigFilePath: ${{ parameters.aksDeployConfigFilePath }}
+      veracodeProject: ${{ parameters.veracodeProject }}
+      skipVeracodeCheck: ${{ parameters.skipVeracodeCheck }}
+      additionalPublishFilesToCopy: ${{ parameters.additionalPublishFilesToCopy }}
+      additionalPublishFilesDestinationFolder: ${{ parameters.additionalPublishFilesDestinationFolder }}
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      nugetConfigPath: ${{ parameters.nugetConfigPath }}
+      nugetFeed: ${{ parameters.nugetFeed }}
+      uniqueNameSuffix: ${{ parameters.uniqueNameSuffix }}
+
+  - template: ./aks-image-build-stage.yml
+    parameters:
+      notificationEmailAddress: ${{ parameters.notificationEmailAddress }}
+      dockerfileName: ${{ parameters.dockerfileName }}
+      aksDeployConfigFilename: ${{ parameters.aksDeployConfigFilename }}
+      uniqueNameSuffix: ${{ parameters.uniqueNameSuffix }}

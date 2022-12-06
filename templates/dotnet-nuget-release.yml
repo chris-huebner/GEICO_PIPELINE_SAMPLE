@@ -1,0 +1,103 @@
+#
+# YAML template that can be extended to implement a pipeline that
+# builds, packs and sets up release stages for a dotnet NuGet package repo.
+#
+# Since resources cannot be declared in templates, this template requires the top-level
+# YAML pipeline file to create the PipelineAutomation respository resource, for example:
+#
+# resources:
+#  repositories:
+#    - repository: PipelineAutomation
+#      type: git
+#      name: 'Apollo/PipelineAutomation'
+#
+# In addition to using a glob to exclude the projects to pack with the projectsToPack
+# parameter, you can also exclude a .csproj file from being included as a NuGet package
+# with the setting:
+#
+#  <IsPackable>false</IsPackable>
+#
+parameters:
+  - name: projectsToBuild
+    default: '**/*.csproj'
+
+  - name: projectsToPack
+    default: '**/*.csproj'
+
+  - name: projectsToTest
+    default: '**/*.[Tt]ests.csproj'
+
+  - name: filesForVeracode
+    type: object
+    default: |
+      **/bin/**
+      !**/*.[Tt]ests/**
+      !**/*.nupkg
+
+  - name: veracodeProject
+    default: ''
+
+  - name: veracodeCondition
+    default: 'succeeded()'
+
+  - name: buildConfiguration
+    default: Release
+
+  - name: nugetConfigPath
+    default: NuGet.config
+
+  - name: nugetFeed
+    default: ''
+
+  - name: buildPool
+    default: 'GEICO Agents'
+
+  - name: buildPoolDemands
+    type: object
+    default:
+      - VS2019latest
+
+  - name: skipVeracodeCheck
+    type: boolean
+    default: false
+
+stages:
+- stage: BuildAndPack
+  displayName: 'Build, Pack and Scan'
+  pool:
+    name: ${{ parameters.buildPool }}
+    demands: ${{ parameters.buildPoolDemands }}
+  jobs:
+  - job: BuildAndPack
+    displayName: 'Build and Pack NuGet'
+    workspace:
+      clean: all
+    steps:
+    - checkout: self
+      clean: true
+
+    - template: ./dotnet-build-steps.yml
+      parameters:
+        projectsToBuild: ${{ parameters.projectsToBuild }}
+        projectsToTest: ${{ parameters.projectsToTest }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
+        nugetConfigPath:  ${{ parameters.nugetConfigPath }}
+        nugetFeed:  ${{ parameters.nugetFeed }}
+
+    - template: ./nuget-pack-publish-steps.yml
+      parameters:
+        projectsToPack: ${{ parameters.projectsToPack }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
+
+    - template: ./veracode-scan-steps.yml
+      parameters:
+        veracodeProject: ${{ parameters.veracodeProject }}
+        filesForVeracode: ${{ parameters.filesForVeracode }}
+        veracodeCondition: ${{ parameters.veracodeCondition }}
+        skipVeracodeCheck: ${{ parameters.skipVeracodeCheck }}
+
+- template: ./nuget-release-stages.yml
+  parameters:
+    dependsOn: BuildAndPack
+    veracodeProject: ${{ parameters.veracodeProject }}
+    skipVeracodeCheck: ${{ parameters.skipVeracodeCheck }}

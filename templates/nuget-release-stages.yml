@@ -1,0 +1,118 @@
+#
+# YAML template with stages for releasing NuGet packages:
+# 1. Push preview to @Local, assumes environment named 'NuGet Preview @Local'.
+# 2. Promote preview to @Release, assumes environment named 'NuGet Preview @Release'.
+# 3. Push production to @Local, assumes environment named 'NuGet Production @Local'.
+# 4. Promote production to @Release, assumes environment named 'NuGet Production @Release'.
+#
+# Since resources cannot be declared in templates, this template requires the top-level
+# YAML pipeline file to create the PipelineAutomation respository resource, for example:
+#
+# resources:
+#  repositories:
+#    - repository: PipelineAutomation
+#      type: git
+#      name: 'Apollo/PipelineAutomation'
+
+parameters:
+- name: dependsOn
+  type: string
+
+- name: veracodeProject
+  default: ''
+
+- name: packageFolder
+  default: packages
+
+- name: previewSubFolder
+  default: preview
+
+- name: prodSubFolder
+  default: production
+
+- name: buildPool
+  default: 'GEICO Agents'
+
+- name: buildPoolDemands
+  type: object
+  default:
+    - VS2019latest
+
+- name: skipVeracodeCheck
+  type: boolean
+  default: false
+
+stages:
+- stage: PushLocalPreview
+  displayName: 'Preview @Local Push'
+  dependsOn: ${{ parameters.dependsOn }}
+  pool:
+    name: ${{ parameters.buildPool }}
+    demands: ${{ parameters.buildPoolDemands }}
+  jobs:
+  - template: ./nuget-push-package-job.yml
+    parameters:
+      environment: 'NuGet Preview @Local'
+      displayName: 'Preview @Local Push'
+      packagePath: '${{ parameters.packageFolder }}/${{ parameters.previewSubFolder }}'
+
+- stage: PromoteReleasePreview
+  displayName: 'Preview @Release Promotion'
+  dependsOn: 'PushLocalPreview'
+  pool:
+    name: ${{ parameters.buildPool }}
+    demands: ${{ parameters.buildPoolDemands }}
+  jobs:
+  - template: ./nuget-promote-package-job.yml
+    parameters:
+      environment: 'NuGet Preview @Release'
+      displayName: 'Promote Preview to @Release'
+      packagePath: '${{ parameters.packageFolder }}/${{ parameters.previewSubFolder }}'
+
+- stage: CheckVeracodeScan
+  displayName: Check Veracode Scan
+  dependsOn: ${{ parameters.dependsOn }}
+  pool:
+    name: ${{ parameters.buildPool }}
+    demands: ${{ parameters.buildPoolDemands }}
+  jobs:
+  - ${{ if not(parameters.skipVeracodeCheck) }}:
+    - template: ./veracode-check-scan-jobs.yml
+      parameters:
+        veracodeProject: ${{ parameters.veracodeProject }}
+  - ${{ if parameters.skipVeracodeCheck }}:
+    - job: SkipVeracodeScanCheck
+      displayName: Skip Veracode Scan Check
+      steps:
+        - checkout: none
+        - task: PowerShell@2
+          displayName: 'Warn: No Veracode'
+          inputs:
+            targetType: inline
+            script: 'Write-Host "##[warning] No Veracode Project is Set. Pass in a valid veracodeProject parameter."'
+
+- stage: PushLocalProduction
+  displayName: 'Production @Local Push'
+  dependsOn: CheckVeracodeScan
+  pool:
+    name: ${{ parameters.buildPool }}
+    demands: ${{ parameters.buildPoolDemands }}
+  jobs:
+  - template: ./nuget-push-package-job.yml
+    parameters:
+      environment: 'NuGet Production @Local'
+      displayName: 'Production @Local Push'
+      packagePath: '${{ parameters.packageFolder }}/${{ parameters.prodSubFolder }}'
+
+- stage: PromoteReleaseProduction
+  displayName: 'Production @Release Promotion'
+  dependsOn: 'PushLocalProduction'
+  pool:
+    name: ${{ parameters.buildPool }}
+    demands: ${{ parameters.buildPoolDemands }}
+  jobs:
+  - template: ./nuget-promote-package-job.yml
+    parameters:
+      environment: 'NuGet Production @Release'
+      displayName: 'Promote Production to @Release'
+      packagePath: '${{ parameters.packageFolder }}/${{ parameters.prodSubFolder }}'
