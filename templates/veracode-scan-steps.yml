@@ -21,7 +21,7 @@ parameters:
   default: ''
 
 - name: veracodeCondition
-  default: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/master/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/Release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/main')))
+  default: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release'), startsWith(variables['Build.SourceBranch'], 'refs/heads/main')))
 
 - name: skipVeracodeCheck
   type: boolean
