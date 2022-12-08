@@ -1,56 +1,88 @@
+#
+# YAML template that can be extended for container image builds for dotnet projects.
+# Since resources cannot be declared in templates, this template requires the top-level
+# YAML pipeline file to create the PipelineAutomation respository resource, for example:
+#
+# resources:
+#  repositories:
+#    - repository: PipelineAutomation
+#      type: git
+#      name: 'Apollo/PipelineAutomation'
+#
+
 parameters:
+    # Required: The relative path containing the primary .csproj to build and include in the container image.
   - name: projectSourceFolder
     default: ''
 
+    # Optional: The specific name of the .csproj. If not specified, *.csproj is used.
   - name: projectFileName
     default: ''
 
+    # Optional: Filter for the test projects. Defaults to naming convention [name].Tests.csproj.
   - name: projectsToTest
     default: '**/*.[Tt]ests.csproj'
 
+    # Optional: The Veracode project name to use to initiate scans. If not specifed, the scan steps are skipped.
   - name: veracodeProject
     default: ''
 
+    # Optional: Set to true to bypass submitting the Veracode scan.
   - name: skipVeracodeCheck
     default: false
 
+    # The notification email address
   - name: notificationEmailAddress
     default: ApolloDevs@geico.com
 
+    # Optional: One or more globs of additional files to copy for inclusion in the container image.
+    # Supports a multi-line string for multiple globs.
   - name: additionalPublishFilesToCopy
     default: ''
 
+    # Optional: The path of a subfolder in which to copy the additional files on the container image.
   - name: additionalPublishFilesDestinationFolder
     default: ''
 
+    # Optional: The path where the Dockerfile is located. Defaults to projectSourceFolder.
   - name: dockerfilePath
     default: ''
 
+    # Optional: The path where the Dockerfile is located. Defaults to projectSourceFolder.
   - name: aksDeployConfigFilePath
     default: ''
 
+    # Optional: Name of the Dockerfile to use in the dockerfilePath.
   - name: dockerfileName
     default: Dockerfile
 
+    # Optional: Name of the AKS deployment config file to use to use in the aksDeployConfigFilePath.
   - name: aksDeployConfigFilename
     default: aksdeploy.config.json
 
+    # Optional: The project build configuration to use.
   - name: buildConfiguration
     default: Release
 
+    # Optional: Path to the NuGet.config file for dotnet restore.
   - name: nugetConfigPath
     default: NuGet.config
 
+    # Optional: The artifact feed guid to use instead of NuGet.config defined with nugetConfigPath.
   - name: nugetFeed
     default: ''
 
+    # Optional: The build agent pool.
   - name: buildPool
     default: GEICO Linux Pool
 
+    # Optional: Demands for the build agent pool.
   - name: buildPoolDemands
     type: object
     default: []
 
+    # Optional: A suffix to create a unique name for pipeline stages, jobs and artifacts.
+    # Used for pipelines that build multiple projects/images.
   - name: uniqueNameSuffix
     default: ''
 

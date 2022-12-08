@@ -11,27 +11,34 @@
 #
 
 parameters:
+    # Optional: Filter for the projects to build.
   - name: projectsToBuild
     default: '**/*.csproj'
 
+    # Optional: Filter for the test projects. Defaults to naming convention [name].Tests.csproj.
   - name: projectsToTest
     default: '**/*.[Tt]ests.csproj'
 
-  - name: buildConfiguration
-    default: Release
-
+    # Optional: Path to the NuGet.config file for dotnet restore.
   - name: nugetConfigPath
     default: NuGet.config
 
+    # Optional: The artifact feed guid to use instead of NuGet.config defined with nugetConfigPath.
   - name: nugetFeed
     default: ''
 
+    # Optional: The build agent pool.
   - name: buildPool
     default: GEICO Linux Pool
 
+    # Optional: Demands for the build agent pool.
   - name: buildPoolDemands
     type: object
     default: []
+
+    # Optional: The project build configuration to use.
+  - name: buildConfiguration
+    default: Release
 
 stages:
 - stage: BuildAndTest
