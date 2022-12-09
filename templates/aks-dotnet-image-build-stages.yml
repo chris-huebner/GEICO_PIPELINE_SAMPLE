@@ -21,7 +21,7 @@ parameters:
 
     # Optional: Filter for the test projects. Defaults to naming convention [name].Tests.csproj.
   - name: projectsToTest
-    default: '**/*.[Tt]ests.csproj'
+    default: '**/*[Tt]ests.csproj'
 
     # Optional: The Veracode project name to use to initiate scans. If not specifed, the scan steps are skipped.
   - name: veracodeProject

@@ -17,7 +17,7 @@ parameters:
 
     # Optional: Filter for the test projects. Defaults to naming convention [name].Tests.csproj.
   - name: projectsToTest
-    default: '**/*.[Tt]ests.csproj'
+    default: '**/*[Tt]ests.csproj'
 
     # Optional: Path to the NuGet.config file for dotnet restore.
   - name: nugetConfigPath

@@ -9,7 +9,7 @@ parameters:
     default: ''
 
   - name: projectsToTest
-    default: '**/*.[Tt]ests.csproj'
+    default: '**/*[Tt]ests.csproj'
 
   - name: dockerfileName
     default: Dockerfile

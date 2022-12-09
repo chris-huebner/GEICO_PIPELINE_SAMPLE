@@ -25,7 +25,7 @@ parameters:
     default: '**/*.csproj'
 
   - name: projectsToTest
-    default: '**/*.[Tt]ests.csproj'
+    default: '**/*[Tt]ests.csproj'
 
   - name: filesForVeracode
     type: object
