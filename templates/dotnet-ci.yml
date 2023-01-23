@@ -39,6 +39,14 @@ parameters:
     # Optional: The project build configuration to use.
   - name: buildConfiguration
     default: Release
+    
+    # Optional: the livingdocfile.
+  - name: livingDocFile
+    default: ''
+
+  - name: testAssemblyPath
+    default: ''
+
 
 stages:
 - stage: BuildAndTest
@@ -61,3 +69,5 @@ stages:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         nugetConfigPath:  ${{ parameters.nugetConfigPath }}
         nugetFeed:  ${{ parameters.nugetFeed }}
+        livingDocFile:  ${{ parameters.livingDocFile }}
+        testAssemblyPath:  ${{ parameters.testAssemblyPath }}

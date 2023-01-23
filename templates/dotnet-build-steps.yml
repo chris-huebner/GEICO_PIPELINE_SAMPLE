@@ -18,6 +18,13 @@ parameters:
 - name: nugetFeed
   default: ''
 
+- name: livingDocFile
+  type: string
+  default: ''
+
+- name: testAssemblyPath
+  default: ''
+
 steps:
 
 - script: |
@@ -56,3 +63,11 @@ steps:
       projects: ${{ parameters.projectsToTest }}
       arguments: '--configuration ${{ parameters.buildConfiguration }} --no-restore'
       publishTestResults: true
+
+- ${{ if gt(length(parameters.testAssemblyPath), 0) }}:
+  - template: specflow-bdd-livingdoc-steps.yml
+    parameters:
+     testAssemblyPath: ${{ parameters.testAssemblyPath }}
+     livingDocFile:  ${{ parameters.livingDocFile }}
+     
+     
