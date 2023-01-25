@@ -1,5 +1,5 @@
 #
-# YAML template with steps for creating preview and production NuGet packages using `dotnet pack`
+# YAML template with steps for creating pre-release and production NuGet packages using `dotnet pack`
 # and publishing a pipeline artifact with both.
 #
 parameters:
@@ -10,13 +10,13 @@ parameters:
   default: Release
 
 - name: prereleaseLabel
-  default: preview
+  default: prerelease
 
 - name: packageFolder
   default: packages
 
-- name: previewSubFolder
-  default: preview
+- name: prereleaseSubfolder
+  default: prerelease
 
 - name: prodSubFolder
   default: production
@@ -27,12 +27,12 @@ parameters:
 
 steps:
 - task: DotNetCoreCLI@2
-  displayName: 'Create Preview NuGet Package'
+  displayName: 'Create Pre-release NuGet Package'
   inputs:
     command: 'pack'
     packagesToPack: ${{ parameters.projectsToPack }}
     configuration: ${{ parameters.buildConfiguration }}
-    packDirectory: '$(Build.ArtifactStagingDirectory)/${{ parameters.packageFolder }}/${{ parameters.previewSubFolder }}'
+    packDirectory: '$(Build.ArtifactStagingDirectory)/${{ parameters.packageFolder }}/${{ parameters.prereleaseSubfolder }}'
     buildProperties: 'VersionSuffix=${{ parameters.prereleaseLabel }}.$(Build.BuildId)'
     nobuild: ${{ parameters.nobuild }}
     versioningScheme: 'off'

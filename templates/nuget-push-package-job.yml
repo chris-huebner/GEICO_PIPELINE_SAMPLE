@@ -11,7 +11,7 @@ parameters:
 - name: packagePath
   type: string
 
-- name: nugetFeed
+- name: nugetPushFeed
   default: ''
 
 jobs:
@@ -34,4 +34,4 @@ jobs:
             command: 'push'
             packagesToPush: '$(System.ArtifactsDirectory)/${{ parameters.packagePath }}/*.nupkg'
             nuGetFeedType: 'internal'
-            publishVstsFeed: ${{ parameters.nugetFeed }}
+            publishVstsFeed: ${{ parameters.nugetPushFeed }}

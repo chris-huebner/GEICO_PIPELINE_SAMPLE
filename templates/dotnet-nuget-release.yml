@@ -27,43 +27,25 @@ parameters:
   - name: projectsToTest
     default: '**/*[Tt]ests.csproj'
 
-  - name: filesForVeracode
-    type: object
-    default: |
-      **/bin/**
-      !**/*.[Tt]ests/**
-      !**/*.nupkg
-
-  - name: veracodeProject
-    default: ''
-
-  - name: veracodeCondition
-    default: 'succeeded()'
-
   - name: buildConfiguration
     default: Release
 
   - name: nugetConfigPath
     default: NuGet.config
 
-  - name: nugetFeed
-    default: ''
+  - name: nugetPushFeed
+    default: '4c770948-f962-43f6-b431-66fbdfa1bc34' # UW Apollo
 
   - name: buildPool
     default: 'GEICO Agents'
 
   - name: buildPoolDemands
     type: object
-    default:
-      - VS2019latest
-
-  - name: skipVeracodeCheck
-    type: boolean
-    default: false
+    default: []
 
 stages:
 - stage: BuildAndPack
-  displayName: 'Build, Pack and Scan'
+  displayName: 'Build and Package'
   pool:
     name: ${{ parameters.buildPool }}
     demands: ${{ parameters.buildPoolDemands }}
@@ -82,22 +64,14 @@ stages:
         projectsToTest: ${{ parameters.projectsToTest }}
         buildConfiguration: ${{ parameters.buildConfiguration }}
         nugetConfigPath:  ${{ parameters.nugetConfigPath }}
-        nugetFeed:  ${{ parameters.nugetFeed }}
 
     - template: ./nuget-pack-publish-steps.yml
       parameters:
         projectsToPack: ${{ parameters.projectsToPack }}
         buildConfiguration: ${{ parameters.buildConfiguration }}
 
-    - template: ./veracode-scan-steps.yml
-      parameters:
-        veracodeProject: ${{ parameters.veracodeProject }}
-        filesForVeracode: ${{ parameters.filesForVeracode }}
-        veracodeCondition: ${{ parameters.veracodeCondition }}
-        skipVeracodeCheck: ${{ parameters.skipVeracodeCheck }}
-
 - template: ./nuget-release-stages.yml
   parameters:
     dependsOn: BuildAndPack
-    veracodeProject: ${{ parameters.veracodeProject }}
-    skipVeracodeCheck: ${{ parameters.skipVeracodeCheck }}
+    nugetPushFeed: ${{ parameters.nugetPushFeed}}
+    buildPoolDemands: ${{ parameters.buildPoolDemands }}
