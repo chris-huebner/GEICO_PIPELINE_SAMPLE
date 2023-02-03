@@ -7,12 +7,16 @@ parameters:
 - name: testAssemblyPath
   type: string
   default: ''
-- 
-  name: livingDocFile
+
+- name: testExecutionJsonPath
+  type: string
+  default: ''
+
+- name: livingDocFile
   type: string
   default: 'LivingDoc-$(Build.BuildId).html'
-- 
-  name: ContinueOnError
+
+- name: ContinueOnError
   type: boolean
   default: false
 
@@ -33,13 +37,15 @@ steps:
   inputs:
       script: |
         echo 'Generate Living Doc Report'
-        livingdoc test-assembly ${{ parameters.testAssemblyPath }} -t $(Build.sourcesDirectory)/src/Tests/Rating.Tests.BDD/bin/Release/net6.0/TestExecution.json -o $(Build.ArtifactStagingDirectory)   
+        livingdoc test-assembly ${{ parameters.testAssemblyPath }} -t ${{ parameters.testExecutionJsonPath }} -o $(Build.ArtifactStagingDirectory)
     
-- task: CmdLine@2
+- task: PowerShell@2
   displayName: 'Rename LivingDoc.html' 
   continueOnError: ${{ parameters.ContinueOnError }}
   inputs:
-      script: 'mv $(build.artifactstagingdirectory)/LivingDoc.html  ${{ parameters.livingDocFile }}'
+      targetType: 'inline'
+      script: |
+        Copy-Item $(build.artifactstagingdirectory)/LivingDoc.html  -destination ${{ parameters.livingDocFile }}
 
 - publish: '$(Build.sourcesDirectory)/${{ parameters.livingDocFile }}'
   artifact: LivingDoc

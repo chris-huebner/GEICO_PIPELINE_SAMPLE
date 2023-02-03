@@ -20,9 +20,12 @@ parameters:
 
 - name: livingDocFile
   type: string
-  default: ''
+  default: 'LivingDoc-$(Build.BuildId).html'
 
 - name: testAssemblyPath
+  default: ''
+
+- name: testExecutionJsonPath
   default: ''
 
 steps:
@@ -68,6 +71,7 @@ steps:
   - template: specflow-bdd-livingdoc-steps.yml
     parameters:
      testAssemblyPath: ${{ parameters.testAssemblyPath }}
+     testExecutionJsonPath: ${{ parameters.testExecutionJsonPath }}
      livingDocFile:  ${{ parameters.livingDocFile }}
      
      

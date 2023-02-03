@@ -29,7 +29,7 @@ parameters:
   default: production
 
 - name: buildPool
-  default: 'GEICO Agents'
+  default: GEICO Linux Pool
 
 - name: buildPoolDemands
   type: object

@@ -47,6 +47,9 @@ parameters:
   - name: testAssemblyPath
     default: ''
 
+  - name: testExecutionJsonPath
+    default: ''
+
 
 stages:
 - stage: BuildAndTest
@@ -71,3 +74,4 @@ stages:
         nugetFeed:  ${{ parameters.nugetFeed }}
         livingDocFile:  ${{ parameters.livingDocFile }}
         testAssemblyPath:  ${{ parameters.testAssemblyPath }}
+        testExecutionJsonPath: ${{ parameters.testExecutionJsonPath }}
