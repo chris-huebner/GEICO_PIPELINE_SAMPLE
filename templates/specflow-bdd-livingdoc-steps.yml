@@ -1,5 +1,5 @@
 #
-# Template with steps for generating livingdoc for the given BDD Project name 
+# Template with steps for generating livingdoc for the given BDD Project name
 #
 
 parameters:
@@ -20,32 +20,34 @@ parameters:
   type: boolean
   default: false
 
-
 steps:
 
 - task: CmdLine@2
-  displayName: 'Run all BDD tests' 
+  displayName: 'Run all BDD tests'
   continueOnError: ${{ parameters.ContinueOnError }}
   inputs:
-      script: |         
-          echo "$(Build.SourcesDirectory)"  
+      script: |
+          echo "$(Build.SourcesDirectory)"
           dotnet test ${{ parameters.testAssemblyPath }}
 
 - task: CmdLine@2
-  displayName: 'Generate Living Doc report' 
+  displayName: 'Generate Living Doc report'
   continueOnError: ${{ parameters.ContinueOnError }}
   inputs:
-      script: |
-        echo 'Generate Living Doc Report'
-        livingdoc test-assembly ${{ parameters.testAssemblyPath }} -t ${{ parameters.testExecutionJsonPath }} -o $(Build.ArtifactStagingDirectory)
-    
+    script: |
+      echo 'Generate Living Doc Report'
+      echo 'Destination: $(Build.ArtifactStagingDirectory)'
+      livingdoc test-assembly ${{ parameters.testAssemblyPath }} -t ${{ parameters.testExecutionJsonPath }} -o $(Build.ArtifactStagingDirectory)
+
 - task: PowerShell@2
-  displayName: 'Rename LivingDoc.html' 
+  displayName: 'Rename LivingDoc.html'
   continueOnError: ${{ parameters.ContinueOnError }}
   inputs:
-      targetType: 'inline'
-      script: |
-        Copy-Item $(build.artifactstagingdirectory)/LivingDoc.html  -destination ${{ parameters.livingDocFile }}
+    targetType: 'inline'
+    script: |
+      echo 'ArtifactStagingDirectory: $(Build.ArtifactStagingDirectory)'
+      echo 'Doc file: ${{ parameters.livingDocFile }}'
+      Copy-Item "$(Build.ArtifactStagingDirectory)/LivingDoc.html" "${{ parameters.livingDocFile }}"
 
 - publish: '$(Build.sourcesDirectory)/${{ parameters.livingDocFile }}'
   artifact: LivingDoc
