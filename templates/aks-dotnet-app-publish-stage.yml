@@ -54,7 +54,7 @@ parameters:
     default: docker
 
   - name: buildPool
-    default: GEICO Linux Pool
+    default: GZ-DotNETJava-NP-Linux
 
   - name: buildPoolDemands
     type: object

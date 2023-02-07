@@ -82,4 +82,5 @@ stages:
   parameters:
     dependsOn: BuildAndPack
     nugetPushFeed: ${{ parameters.nugetPushFeed}}
+    buildPool: ${{ parameters.buildPool }}
     buildPoolDemands: ${{ parameters.buildPoolDemands }}

@@ -74,7 +74,7 @@ parameters:
 
     # Optional: The build agent pool.
   - name: buildPool
-    default: GEICO Linux Pool
+    default: GZ-DotNETJava-NP-Linux
 
     # Optional: Demands for the build agent pool.
   - name: buildPoolDemands
@@ -89,6 +89,8 @@ parameters:
 stages:
   - template: ./aks-dotnet-app-publish-stage.yml
     parameters:
+      buildPool: ${{ parameters.buildPool }}
+      buildPoolDemands: ${{ parameters.buildPoolDemands }}
       projectSourceFolder: ${{ parameters.projectSourceFolder }}
       projectFileName: ${{ parameters.projectFileName }}
       projectsToTest: ${{ parameters.projectsToTest }}
@@ -107,6 +109,8 @@ stages:
 
   - template: ./aks-image-build-stage.yml
     parameters:
+      buildPool: ${{ parameters.buildPool }}
+      buildPoolDemands: ${{ parameters.buildPoolDemands }}
       notificationEmailAddress: ${{ parameters.notificationEmailAddress }}
       dockerfileName: ${{ parameters.dockerfileName }}
       aksDeployConfigFilename: ${{ parameters.aksDeployConfigFilename }}
