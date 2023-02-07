@@ -29,7 +29,7 @@ parameters:
 
     # Optional: The build agent pool.
   - name: buildPool
-    default: GZ-DotNETJava-NP-Linux
+    default: GEICO Linux Pool
 
     # Optional: Demands for the build agent pool.
   - name: buildPoolDemands
