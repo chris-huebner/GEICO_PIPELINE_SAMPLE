@@ -29,11 +29,14 @@ parameters:
   default: production
 
 - name: buildPool
-  default: 'GEICO Agents'
+  default: GZ-DotNETJava-NP-Linux
 
 - name: buildPoolDemands
   type: object
   default: []
+
+- name: canPushReleaseCondition
+  default: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')))
 
 stages:
 - stage: PushPrerelease
@@ -53,6 +56,7 @@ stages:
 - stage: PushProduction
   displayName: Push Production
   dependsOn: PushPrerelease
+  condition: ${{ parameters.canPushReleaseCondition }}
   pool:
     name: ${{ parameters.buildPool }}
     demands: ${{ parameters.buildPoolDemands }}

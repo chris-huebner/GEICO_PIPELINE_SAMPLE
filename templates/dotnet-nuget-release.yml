@@ -37,7 +37,7 @@ parameters:
     default: '4c770948-f962-43f6-b431-66fbdfa1bc34' # UW Apollo
 
   - name: buildPool
-    default: 'GEICO Agents'
+    default: GZ-DotNETJava-NP-Linux
 
   - name: buildPoolDemands
     type: object

@@ -28,10 +28,10 @@ jobs:
           displayName: 'Download Pipeline Artifacts'
           inputs:
             path: $(System.ArtifactsDirectory)
-        - task: NuGetCommand@2
+        - task: DotNetCoreCLI@2
           displayName: 'NuGet Push ${{ parameters.packagePath }}'
           inputs:
             command: 'push'
-            packagesToPush: '$(System.ArtifactsDirectory)/${{ parameters.packagePath }}/*.nupkg'
+            searchPatternPush: '$(System.ArtifactsDirectory)/${{ parameters.packagePath }}/*.nupkg'
             nuGetFeedType: 'internal'
-            publishVstsFeed: ${{ parameters.nugetPushFeed }}
+            feedPublish: ${{ parameters.nugetPushFeed }}
