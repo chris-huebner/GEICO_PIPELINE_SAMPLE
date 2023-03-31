@@ -107,6 +107,7 @@ stages:
     - template: ./dotnet-build-steps.yml
       parameters:
         projectsToBuild: $(projectToBuild)
+        projectsToTest: ${{ parameters.projectsToTest }}
         buildConfiguration: ${{ parameters.buildConfiguration }}
         nugetConfigPath: ${{ parameters.nugetConfigPath }}
         nugetFeed: ${{ parameters.nugetFeed }}
