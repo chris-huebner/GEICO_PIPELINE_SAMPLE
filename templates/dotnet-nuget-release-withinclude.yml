@@ -1,0 +1,86 @@
+#
+# YAML template that can be extended to implement a pipeline that
+# builds, packs and sets up release stages for a dotnet NuGet package repo.
+#
+# Since resources cannot be declared in templates, this template requires the top-level
+# YAML pipeline file to create the PipelineAutomation respository resource, for example:
+#
+# resources:
+#  repositories:
+#    - repository: PipelineAutomation
+#      type: git
+#      name: 'Apollo/PipelineAutomation'
+#
+# In addition to using a glob to exclude the projects to pack with the projectsToPack
+# parameter, you can also exclude a .csproj file from being included as a NuGet package
+# with the setting:
+#
+#  <IsPackable>false</IsPackable>
+#
+parameters:
+  - name: projectsToBuild
+    default: '**/*.csproj'
+
+  - name: projectsToPack
+    default: '**/*.csproj'
+
+  - name: projectsToTest
+    default: '**/*[Tt]ests.csproj'
+
+  - name: buildConfiguration
+    default: Release
+
+  - name: nugetConfigPath
+    default: NuGet.config
+
+  - name: nugetPushFeed
+    default: '4c770948-f962-43f6-b431-66fbdfa1bc34' # UW Apollo
+
+  - name: buildPool
+    default: GZ-DotNETJava-NP-Linux
+
+  - name: buildPoolDemands
+    type: object
+    default: []
+
+  - name: bddAssemblyPath
+    default: ''
+
+  - name: testExecutionJsonPath
+    default: ''
+
+stages:
+- stage: BuildAndPack
+  displayName: 'Build and Package'
+  pool:
+    name: ${{ parameters.buildPool }}
+    demands: ${{ parameters.buildPoolDemands }}
+  jobs:
+  - job: BuildAndPack
+    displayName: 'Build and Pack NuGet'
+    workspace:
+      clean: all
+    steps:
+    - checkout: self
+      clean: true
+
+    - template: ./dotnet-build-steps.yml
+      parameters:
+        projectsToBuild: ${{ parameters.projectsToBuild }}
+        projectsToTest: ${{ parameters.projectsToTest }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
+        nugetConfigPath:  ${{ parameters.nugetConfigPath }}
+        testAssemblyPath: ${{ parameters.bddAssemblyPath }}
+        testExecutionJsonPath: ${{ parameters.testExecutionJsonPath }}
+
+    - template: ./nuget-pack-publish-steps-includeproj.yml
+      parameters:
+        projectsToPack: ${{ parameters.projectsToPack }}
+        buildConfiguration: ${{ parameters.buildConfiguration }}
+
+- template: ./nuget-release-stages.yml
+  parameters:
+    dependsOn: BuildAndPack
+    nugetPushFeed: ${{ parameters.nugetPushFeed}}
+    buildPool: ${{ parameters.buildPool }}
+    buildPoolDemands: ${{ parameters.buildPoolDemands }}

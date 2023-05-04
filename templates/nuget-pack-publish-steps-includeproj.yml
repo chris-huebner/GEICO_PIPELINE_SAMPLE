@@ -1,0 +1,47 @@
+#
+# YAML template with steps for creating pre-release and production NuGet packages using `dotnet pack`
+# and publishing a pipeline artifact with both.
+#
+parameters:
+- name: projectsToPack
+  default: '**/*.csproj'
+
+- name: buildConfiguration
+  default: Release
+
+- name: prereleaseLabel
+  default: prerelease
+
+- name: packageFolder
+  default: packages
+
+- name: prereleaseSubfolder
+  default: prerelease
+
+- name: prodSubFolder
+  default: production
+
+- name: nobuild
+  type: boolean
+  default: true
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: 'Create Pre-release NuGet Package'
+  inputs:
+    command: 'custom'
+    custom: pack
+    arguments: '${{ parameters.projectsToPack }} -c ${{ parameters.buildConfiguration }} --verbosity normal -IncludeReferencedProjects --version-suffix ${{ parameters.prereleaseLabel }}.$(Build.BuildId)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Create Production NuGet Package'
+  inputs:
+    command: 'pack'
+    packagesToPack: ${{ parameters.projectsToPack }}
+    configuration: ${{ parameters.buildConfiguration }}
+    packDirectory: '$(Build.ArtifactStagingDirectory)/${{ parameters.packageFolder }}/${{ parameters.prodSubFolder }}'
+    nobuild: ${{ parameters.nobuild }}
+    versioningScheme: 'off'
+
+- publish: '$(Build.ArtifactStagingDirectory)/${{ parameters.packageFolder }}'
+  artifact: '${{ parameters.packageFolder }}'
