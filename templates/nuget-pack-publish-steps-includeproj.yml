@@ -33,7 +33,7 @@ steps:
     packagesToPack: ${{ parameters.projectsToPack }}
     configuration: ${{ parameters.buildConfiguration }}
     packDirectory: '$(Build.ArtifactStagingDirectory)/${{ parameters.packageFolder }}/${{ parameters.prereleaseSubfolder }}'
-    buildProperties: 'VersionSuffix=${{ parameters.prereleaseLabel }}.$(Build.BuildId);IncludeReferencedProjects=true'
+    buildProperties: 'VersionSuffix=${{ parameters.prereleaseLabel }}.$(Build.BuildId)'
     nobuild: ${{ parameters.nobuild }}
     versioningScheme: 'off'
 
