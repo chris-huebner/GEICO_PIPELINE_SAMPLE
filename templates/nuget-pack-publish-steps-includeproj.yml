@@ -29,9 +29,13 @@ steps:
 - task: DotNetCoreCLI@2
   displayName: 'Create Pre-release NuGet Package'
   inputs:
-    command: 'custom'
-    custom: pack
-    arguments: '${{ parameters.projectsToPack }} -c ${{ parameters.buildConfiguration }} --verbosity normal -IncludeReferencedProjects --version-suffix ${{ parameters.prereleaseLabel }}.$(Build.BuildId)'
+    command: 'pack'
+    packagesToPack: ${{ parameters.projectsToPack }}
+    configuration: ${{ parameters.buildConfiguration }}
+    packDirectory: '$(Build.ArtifactStagingDirectory)/${{ parameters.packageFolder }}/${{ parameters.prereleaseSubfolder }}'
+    buildProperties: 'VersionSuffix=${{ parameters.prereleaseLabel }}.$(Build.BuildId) IncludeReferencedProjects=true'
+    nobuild: ${{ parameters.nobuild }}
+    versioningScheme: 'off'
 
 - task: DotNetCoreCLI@2
   displayName: 'Create Production NuGet Package'
