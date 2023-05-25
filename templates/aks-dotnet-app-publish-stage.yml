@@ -161,5 +161,10 @@ stages:
       parameters:
         veracodeProject: ${{ parameters.veracodeProject }}
         filesForVeracodeSourcePath: $(appPublishArtifactPath)
-        filesForVeracode: '**'
+        filesForVeracode: |
+            **/*.dll
+            **/*.pdb
+            **/*.exe
+            !**/*.json
+            !**/*.xml
         skipVeracodeCheck: ${{ parameters.skipVeracodeCheck }}

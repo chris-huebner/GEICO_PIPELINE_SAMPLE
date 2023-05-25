@@ -13,9 +13,13 @@ parameters:
 - name: filesForVeracode
   type: string
   default: |
-    **/bin/**
+    **/bin/**.dll
+    **/bin/**.pdb
+    **/bin/**.exe
     !**/*.[Tt]ests/**
     !**/*.nupkg
+    !**/*.json
+    !**/*.xml
 
 - name: veracodeProject
   default: ''
