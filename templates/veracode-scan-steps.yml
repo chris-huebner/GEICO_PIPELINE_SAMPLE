@@ -16,6 +16,9 @@ parameters:
     **/bin/**.dll
     **/bin/**.pdb
     **/bin/**.exe
+    **/bin/**.js
+    **/bin/**.ts
+    **/bin/**.asp
     !**/*.[Tt]ests/**
     !**/*.nupkg
     !**/*.json

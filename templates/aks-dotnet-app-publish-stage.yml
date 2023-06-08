@@ -165,6 +165,9 @@ stages:
             **/*.dll
             **/*.pdb
             **/*.exe
+            **/*.js
+            **/*.ts
+            **/*.asp
             !**/*.json
             !**/*.xml
         skipVeracodeCheck: ${{ parameters.skipVeracodeCheck }}
