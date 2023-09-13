@@ -44,10 +44,16 @@ parameters:
   - name: livingDocFile
     default: ''
 
+    # Assembly Path for BDD tests
   - name: testAssemblyPath
     default: ''
 
+    # Test Execution Json Path for Specflow
   - name: testExecutionJsonPath
+    default: ''
+
+    # Display name for SpecFlow ADO Plugin
+  - name: bddDisplayName
     default: ''
 
 
@@ -75,3 +81,4 @@ stages:
         livingDocFile:  ${{ parameters.livingDocFile }}
         testAssemblyPath:  ${{ parameters.testAssemblyPath }}
         testExecutionJsonPath: ${{ parameters.testExecutionJsonPath }}
+        bddDisplayName: ${{ parameters.bddDisplayName }}

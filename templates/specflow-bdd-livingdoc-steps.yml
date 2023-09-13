@@ -20,6 +20,10 @@ parameters:
   type: boolean
   default: false
 
+- name: bddDisplayName
+  type: string
+  default: ''
+
 steps:
 
 - task: CmdLine@2
@@ -48,6 +52,21 @@ steps:
       echo 'ArtifactStagingDirectory: $(Build.ArtifactStagingDirectory)'
       echo 'Doc file: ${{ parameters.livingDocFile }}'
       Copy-Item "$(Build.ArtifactStagingDirectory)/LivingDoc.html" "${{ parameters.livingDocFile }}"
+
+- task: SpecFlowPlus@0
+  displayName: 'Publish LivingDoc to ADO'
+  inputs:
+    generatorSource: 'TestAssembly'
+    testAssemblyFilePath: ${{ parameters.testAssemblyPath }}
+    projectName: ${{ parameters.bddDisplayName }}
+    testExecutionJson: ${{ parameters.testExecutionJsonPath }}
+    projectLanguage: 'en'
+    workItemPrefix: ''
+    workItemUrlTemplate: ''
+    bindingAssemblies:
+  enabled: true
+  continueOnError: true
+  timeoutInMinutes: 5
 
 - publish: '$(Build.sourcesDirectory)/${{ parameters.livingDocFile }}'
   artifact: LivingDoc

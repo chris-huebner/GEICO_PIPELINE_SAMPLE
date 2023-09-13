@@ -28,6 +28,9 @@ parameters:
 - name: testExecutionJsonPath
   default: ''
 
+- name: bddDisplayName
+  default: ''
+
 steps:
 
 - script: |
@@ -73,5 +76,6 @@ steps:
      testAssemblyPath: ${{ parameters.testAssemblyPath }}
      testExecutionJsonPath: ${{ parameters.testExecutionJsonPath }}
      livingDocFile:  ${{ parameters.livingDocFile }}
+     bddDisplayName: ${{ parameters.bddDisplayName }}
      
      
