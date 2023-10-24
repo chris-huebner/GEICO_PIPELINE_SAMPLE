@@ -63,6 +63,14 @@ parameters:
   - name: uniqueNameSuffix
     default: ''
 
+# Custom step(s) injection pre or post BuildAndPublishApp$ job tasks
+  - name: preJobCustomSteps # one or more steps (task, script, .. etc)
+    type: stepList
+    default: []
+  - name: postJobCustomSteps  # one or more steps (task, script, .. etc)
+    type: stepList
+    default: []
+
 stages:
 - stage: 'BuildAndPublishApp${{ parameters.uniqueNameSuffix }}'
   displayName: Build and Publish Application
@@ -102,6 +110,8 @@ stages:
         echo '$(aksDeployConfigFile)'
         echo '${{ parameters.projectSourceFolder }}'
       displayName: Log Variables
+ 
+    - ${{ parameters.preJobCustomSteps }} # custom steps
 
       # build and test the app
     - template: ./dotnet-build-steps.yml
@@ -157,6 +167,8 @@ stages:
         targetPath: $(Build.ArtifactStagingDirectory)
         artifact: ${{ parameters.artifactName }}${{ parameters.uniqueNameSuffix }}
 
+    - ${{ parameters.postJobCustomSteps }} # custom steps
+ 
     - template: ./veracode-scan-steps.yml
       parameters:
         veracodeProject: ${{ parameters.veracodeProject }}

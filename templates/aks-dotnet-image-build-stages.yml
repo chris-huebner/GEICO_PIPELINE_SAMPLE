@@ -86,6 +86,14 @@ parameters:
   - name: uniqueNameSuffix
     default: ''
 
+  # Custom step(s) injection pre or post BuildAndPublishApp$ job tasks
+  - name: preJobCustomSteps # one or more steps (task, script, .. etc)
+    type: stepList
+    default: []
+  - name: postJobCustomSteps  # one or more steps (task, script, .. etc)
+    type: stepList
+    default: []
+
 stages:
   - template: ./aks-dotnet-app-publish-stage.yml
     parameters:
@@ -106,6 +114,8 @@ stages:
       nugetConfigPath: ${{ parameters.nugetConfigPath }}
       nugetFeed: ${{ parameters.nugetFeed }}
       uniqueNameSuffix: ${{ parameters.uniqueNameSuffix }}
+      preJobCustomSteps: ${{ parameters.preJobCustomSteps }}
+      postJobCustomSteps: ${{ parameters.postJobCustomSteps }}
 
   - template: ./aks-image-build-stage.yml
     parameters:
