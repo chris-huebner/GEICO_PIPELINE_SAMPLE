@@ -48,6 +48,10 @@ parameters:
 
   - name: testExecutionJsonPath
     default: ''
+    
+  - name: nobuild
+    type: boolean
+    default: true
 
 stages:
 - stage: BuildAndPack
@@ -77,6 +81,7 @@ stages:
       parameters:
         projectsToPack: ${{ parameters.projectsToPack }}
         buildConfiguration: ${{ parameters.buildConfiguration }}
+        nobuild: ${{ parameters.nobuild }}
 
 - template: ./nuget-release-stages.yml
   parameters:
